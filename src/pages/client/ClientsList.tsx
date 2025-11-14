@@ -10,9 +10,7 @@ export default function ClientsList() {
     c.name.toLowerCase().startsWith(search.toLowerCase())
   );
 
-  // helper om een nette URL slug te maken
-  const slugify = (name: string) =>
-    name.toLowerCase().replace(/\s+/g, "-");
+  
 
   return (
     <div className={styles.container}>

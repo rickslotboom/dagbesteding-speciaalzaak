@@ -1,4 +1,3 @@
-import React from "react";
 import "./Instellingen.module.css";
 
 export default function Instellingen() {
