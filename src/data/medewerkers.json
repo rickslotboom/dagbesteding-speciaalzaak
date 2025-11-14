@@ -1,0 +1,20 @@
+[
+  {
+    "id": "1",
+    "name": "Spongebob",
+    "img": "https://i.imgur.com/3sXKp4M.png",
+    "intro": "Spongebob is onze vrolijke medewerker, altijd enthousiast en klaar om te helpen."
+  },
+  {
+    "id": "2",
+    "name": "Patrick",
+    "img": "https://i.imgur.com/MPZVjLb.png",
+    "intro": "Patrick is ontspannen en relaxed — maar altijd aanwezig als je hem nodig hebt."
+  },
+  {
+    "id": "3",
+    "name": "Octo",
+    "img": "https://i.imgur.com/orz8I1M.png",
+    "intro": "Octo houdt alles in de gaten en werkt graag gestructureerd."
+  }
+]

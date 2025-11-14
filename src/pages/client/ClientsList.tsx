@@ -10,6 +10,10 @@ export default function ClientsList() {
     c.name.toLowerCase().startsWith(search.toLowerCase())
   );
 
+  // helper om een nette URL slug te maken
+  const slugify = (name: string) =>
+    name.toLowerCase().replace(/\s+/g, "-");
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Cliënten</h1>
@@ -24,7 +28,11 @@ export default function ClientsList() {
 
       <div className={styles.list}>
         {filteredClients.map((c) => (
-          <Link to={`/client/${c.id}`} key={c.id} className={styles.card}>
+          <Link
+            to={`/client/${(c.id)}`}
+            key={c.id}
+            className={styles.card}
+          >
             <img src={c.photo} className={styles.photo} alt={c.name} />
             <div>
               <h2 className={styles.name}>{c.name}</h2>
