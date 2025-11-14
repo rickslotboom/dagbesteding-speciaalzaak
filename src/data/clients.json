@@ -1,0 +1,154 @@
+[
+  {
+    "id": 1,
+    "name": "Spongebob",
+    "age": 39,
+    "photo": "/images/spongebob.jpg",
+    "address": "Bikini Bottom 1",
+    "contact_person": "Mr. Krabs (werk)",
+    "medication": "Geen",
+    "hobbies": ["Jellyfishing", "Koken"],
+    "calming": "Diepe ademhaling, rustige muziek",
+    "communication": ["pictogrammen", "eenvoudige taal"],
+    "help_requests": "Structuur bij dagelijkse taken",
+    "parent_requests": "Duidelijke planning",
+
+    "strengths": ["Altijd vrolijk", "Geduldig", "Behulpzaam"],
+    "tasks_good_at": ["Koken", "Schoonmaken van de keuken"],
+    "fixed_tasks": ["Lunch voorbereiden", "Werkplek schoonhouden"],
+
+    "support_staff": "Begeleider ondersteunt met planning, geeft stap-voor-stap uitleg.",
+    "support_client": "Spongebob voert taken zelfstandig uit na korte uitleg.",
+    "support_frequency": "2x per week",
+    "support_location": "Keuken van de Krusty Krab",
+    "support_tools": "Keukenpictogrammen, stappenkaart",
+
+    "goals": [
+      {
+        "id": "g1",
+        "title": "Zelfstandig lunch klaarmaken",
+        "short_term": true,
+        "status": "in progress",
+        "end_date": "2025-12-31",
+        "details": "Begeleiding 2x per week in keukenvaardigheden"
+      }
+    ],
+
+    "signaling_plan": {
+      "green": {
+        "goes_well": ["Vrolijk", "Actief meedoen", "Goed aanspreekbaar"]
+      },
+      "orange": {
+        "signals": ["Onrustig bewegen", "Korte antwoorden", "Snel afgeleid"],
+        "what_helps": ["Rustige ruimte", "Helder taakje geven", "Even samen ademhalen"],
+        "what_not_helps": ["Druk praten", "Extra taken geven"]
+      },
+      "red": {
+        "safety": ["Begeleider blijft in de buurt", "Geen prikkels toevoegen"],
+        "contact": ["Mr. Krabs - werk", "Begeleider dienst"]
+      }
+    }
+  },
+
+  {
+    "id": 2,
+    "name": "Patrick Ster",
+    "age": 42,
+    "photo": "/images/patrick.jpg",
+    "address": "Bikini Bottom 2",
+    "contact_person": "Spongebob (vriend)",
+    "medication": "Geen",
+    "hobbies": ["Slapen", "Tekenen"],
+    "calming": "Rustige omgeving, knuffel",
+    "communication": ["gebaren", "eenvoudige taal"],
+    "help_requests": "Ondersteuning bij dagstructuur",
+    "parent_requests": "Meer beweging en structuur",
+
+    "strengths": ["Creatief", "Zorgzaam"],
+    "tasks_good_at": ["Tekenopdrachten", "Ruimtes rustig houden"],
+    "fixed_tasks": ["Dagstart met Spongebob", "Tekentafel opruimen"],
+
+    "support_staff": "Begeleider biedt duidelijke dagstructuur en prikkelarme begeleiding.",
+    "support_client": "Patrick voert taken uit met eenvoudige instructies.",
+    "support_frequency": "Dagelijks",
+    "support_location": "Tekenhoek, woonruimte",
+    "support_tools": "Pictogrammen, knuffel, eenvoudige stappenkaarten",
+
+    "goals": [
+      {
+        "id": "g1",
+        "title": "Dagelijkse wandeling (10 min)",
+        "short_term": true,
+        "status": "planned",
+        "end_date": "2025-11-30",
+        "details": "Wandeling met begeleider dagelijks"
+      }
+    ],
+
+    "signaling_plan": {
+      "green": {
+        "goes_well": ["Rustig", "Tekent met plezier", "Goed aanspreekbaar"]
+      },
+      "orange": {
+        "signals": ["Staart af", "Wordt stil", "Geen zin meer in activiteiten"],
+        "what_helps": ["Even zitten met knuffel", "Rustige hoek", "Stapsgewijs uitleggen"],
+        "what_not_helps": ["Drukte", "Te snel willen gaan"]
+      },
+      "red": {
+        "safety": ["Afzonderlijke rustige ruimte", "Begeleider blijft dichtbij"],
+        "contact": ["Spongebob", "Dienstdoende begeleider"]
+      }
+    }
+  },
+
+  {
+    "id": 3,
+    "name": "Octo",
+    "age": 47,
+    "photo": "/images/octo.jpg",
+    "address": "Bikini Bottom 3",
+    "contact_person": "Octo's familie",
+    "medication": "Medicatie X",
+    "hobbies": ["Lezen", "Duiken"],
+    "calming": "Korte pauzes, rustige ruimte",
+    "communication": ["pictogrammen", "eenvoudige taal"],
+    "help_requests": "Ondersteuning bij administratie",
+    "parent_requests": "Begeleide administratie-uren",
+
+    "strengths": ["Analytisch", "Rustig", "Nauwkeurig"],
+    "tasks_good_at": ["Administratie", "Structuur aanbrengen"],
+    "fixed_tasks": ["Administratie-uur", "Wekelijkse papieren ordenen"],
+
+    "support_staff": "Begeleider maakt overzichtelijke takenlijst en ondersteunt bij moeilijke brieven.",
+    "support_client": "Octo werkt zelfstandig met pauzes, stelt vragen als iets onduidelijk is.",
+    "support_frequency": "Wekelijks",
+    "support_location": "Administratiekamer",
+    "support_tools": "Checklists, mapstructuur, pictogrammen",
+
+    "goals": [
+      {
+        "id": "g1",
+        "title": "Administratie bijhouden",
+        "short_term": false,
+        "status": "not started",
+        "end_date": "2026-03-31",
+        "details": "Wekelijkse begeleider-sessies"
+      }
+    ],
+
+    "signaling_plan": {
+      "green": {
+        "goes_well": ["Concentratie goed", "Rustige houding", "Proactief"]
+      },
+      "orange": {
+        "signals": ["Zuchten", "Trekt zich terug", "Begint taken uit te stellen"],
+        "what_helps": ["Korte pauze", "Stille ruimte", "Helder overzicht maken"],
+        "what_not_helps": ["Lang praten", "Nieuwe taken geven"]
+      },
+      "red": {
+        "safety": ["Geen prikkels", "Duidelijke korte instructies", "Begeleider ondersteunt direct"],
+        "contact": ["Familie Octo", "Teamleider dienst"]
+      }
+    }
+  }
+]

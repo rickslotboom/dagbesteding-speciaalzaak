@@ -1,0 +1,37 @@
+.card {
+background: white;
+border: 1px solid #eee;
+border-radius: 14px;
+padding: 14px;
+display: flex;
+gap: 12px;
+align-items: center;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+
+.photo {
+width: 60px;
+height: 60px;
+border-radius: 50%;
+object-fit: cover;
+}
+
+
+.name {
+font-size: 18px;
+font-weight: bold;
+}
+
+
+.info {
+font-size: 14px;
+color: #555;
+}
+
+
+.status {
+font-size: 12px;
+color: #2a72ff;
+margin-top: 4px;
+}
