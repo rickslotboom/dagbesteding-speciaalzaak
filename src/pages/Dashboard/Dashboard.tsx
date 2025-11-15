@@ -6,7 +6,7 @@ interface DashboardProps {
   user: any;
 }
 
-export default function Dashboard({ user }: DashboardProps) {
+export default function Dashboard({ }: DashboardProps) {
   return (
     <div className="container">
       <h1 className="title">Wie komt er vandaag?</h1>

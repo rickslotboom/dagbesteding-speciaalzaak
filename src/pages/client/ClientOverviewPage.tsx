@@ -15,7 +15,7 @@ const tabs = [
   "Dagrapportage",
 ];
 
-export default function ClientOverviewPage({ user }: { user: any })  {
+export default function ClientOverviewPage({}: { user: any })  {
   const { id } = useParams();
 
   const [client, setClient] = useState<any | null>(null);
