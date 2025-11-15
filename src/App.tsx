@@ -28,7 +28,7 @@ export default function App() {
       <AppRouter user={user} />
 
       {/* 🔥 Altijd zichtbaar bottom navigation */}
-      <BottomNav />
+      <BottomNav user={user} />
     </Router>
   );
 }
