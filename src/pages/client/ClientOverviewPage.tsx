@@ -1,7 +1,8 @@
-import { useState, type JSXElementConstructor, type ReactElement, type ReactNode, type ReactPortal } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import clients from "../../data/clients.json";
-import styles from "./ClientOverviewPage.module.css";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase";
+import "./ClientOverviewPage.module.css";
 
 const tabs = [
   "Profiel",
@@ -14,42 +15,63 @@ const tabs = [
   "Dagrapportage",
 ];
 
-export default function ClientOverviewPage() {
+export default function ClientOverviewPage({ user }: { user: any })  {
   const { id } = useParams();
-  const client = clients.find((c) => c.id === Number(id));
+
+  const [client, setClient] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
-  if (!client) return <p className={styles.notfound}>Cliënt niet gevonden.</p>;
+  // 🔥 1 CLIENT LADEN VANUIT FIRESTORE
+  useEffect(() => {
+    async function load() {
+      const ref = doc(db, "clients", id as string);
+      const snap = await getDoc(ref);
 
-  // helper to render an array or fallback
-  const renderList = (arr: string | number | bigint | boolean | any[] | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined) => {
-    if (!arr) return <p className={styles.empty}>Niet ingevuld.</p>;
-    if (typeof arr === "string") return <p>{arr}</p>;
-    if (!Array.isArray(arr)) return <p>{String(arr)}</p>;
-    return (
-      <ul>
-        {arr.map((item, i) => (
-          <li key={i}>{item}</li>
-        ))}
-      </ul>
-    );
+      if (snap.exists()) {
+        setClient({ id: snap.id, ...snap.data() });
+      } else {
+        setClient(undefined);
+      }
+    }
+    load();
+  }, [id]);
+
+  // LOADING STATE
+  if (client === null) return <p>Laden…</p>;
+
+  // NOT FOUND
+  if (client === undefined)
+    return <p className="notfound">Cliënt niet gevonden.</p>;
+
+  // Helper om lijsten netjes te tonen
+  const renderList = (value: any[]) => {
+    if (!value) return <p className="empty">Niet ingevuld.</p>;
+    if (Array.isArray(value))
+      return (
+        <ul>
+          {value.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+      );
+    return <p>{String(value)}</p>;
   };
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <img src={client.photo} alt={client.name} className={styles.photo} />
-        <div className={styles.headerInfo}>
+    <div className="container">
+      <header className="header">
+        <img src={client.photo} alt={client.name} className="photo" />
+        <div className="headerInfo">
           <h1>{client.name}</h1>
           <p>Leeftijd: {client.age}</p>
         </div>
       </header>
 
-      <nav className={styles.tabs}>
+      <nav className="tabs">
         {tabs.map((t) => (
           <button
             key={t}
-            className={`${styles.tabButton} ${activeTab === t ? styles.active : ""}`}
+            className={`tabButton ${activeTab === t ? "active" : ""}`}
             onClick={() => setActiveTab(t)}
           >
             {t}
@@ -57,7 +79,7 @@ export default function ClientOverviewPage() {
         ))}
       </nav>
 
-      <section className={styles.tabContent}>
+      <section className="tabContent">
         {/* PROFIEL */}
         {activeTab === "Profiel" && (
           <div>
@@ -77,7 +99,7 @@ export default function ClientOverviewPage() {
           </div>
         )}
 
-        {/* HULPVragen & DOELEN */}
+        {/* Hulpvragen & Doelen */}
         {activeTab === "Hulpvragen & Doelen" && (
           <div>
             <h2>Hulpvragen</h2>
@@ -86,20 +108,25 @@ export default function ClientOverviewPage() {
 
             <h3>Doelen</h3>
             <ul>
-              {client.goals?.map((g) => (
-                <li key={g.id}>
-                  <strong>{g.title}</strong> — {g.status} {g.short_term ? "(Kort termijn)" : ""}
-                  <br />
-                  Einddatum: {g.end_date}
-                  <br />
-                  {g.details}
-                </li>
-              )) ?? <li>Geen doelen gevonden.</li>}
+              {client.goals?.length ? (
+                client.goals.map((g: any) => (
+                  <li key={g.id}>
+                    <strong>{g.title}</strong> — {g.status}{" "}
+                    {g.short_term ? "(Kort termijn)" : ""}
+                    <br />
+                    Einddatum: {g.end_date}
+                    <br />
+                    {g.details}
+                  </li>
+                ))
+              ) : (
+                <li>Geen doelen gevonden.</li>
+              )}
             </ul>
           </div>
         )}
 
-        {/* ONDERSTEUNING & AANPAK */}
+        {/* Ondersteuning */}
         {activeTab === "Ondersteuning" && (
           <div>
             <h2>Ondersteuning & Aanpak</h2>
@@ -121,7 +148,7 @@ export default function ClientOverviewPage() {
           </div>
         )}
 
-        {/* VASTE TAKEN */}
+        {/* Vaste taken */}
         {activeTab === "Vaste Taken" && (
           <div>
             <h2>Vaste Taken</h2>
@@ -137,33 +164,26 @@ export default function ClientOverviewPage() {
           </div>
         )}
 
-        {/* SIGNAALPLAN */}
+        {/* Signaalplan */}
         {activeTab === "Signaalplan" && (
           <div>
             <h2>Signaleringsplan bij spanning</h2>
 
             <h3>🟢 Groene fase — Wat gaat goed?</h3>
-            {/*
-              In jouw JSON is dit: client.signaling_plan.green.goes_well (array)
-              of client.signaling_plan.green (object)
-            */}
-            {client.signaling_plan?.green ? (
-              <>
-                {client.signaling_plan.green.goes_well
-                  ? renderList(client.signaling_plan.green.goes_well)
-                  : <p>{JSON.stringify(client.signaling_plan.green)}</p>}
-              </>
-            ) : (
-              <p>Geen gegevens ingevuld.</p>
-            )}
+            {client.signaling_plan?.green
+              ? renderList(client.signaling_plan.green.goes_well)
+              : <p>Geen gegevens ingevuld.</p>
+            }
 
             <h3>🟠 Oranje fase — Eerste signalen & aanpak</h3>
             {client.signaling_plan?.orange ? (
               <>
                 <strong>Signalen:</strong>
                 {renderList(client.signaling_plan.orange.signals)}
+
                 <strong>Wat helpt:</strong>
                 {renderList(client.signaling_plan.orange.what_helps)}
+
                 <strong>Wat niet helpt:</strong>
                 {renderList(client.signaling_plan.orange.what_not_helps)}
               </>
@@ -176,6 +196,7 @@ export default function ClientOverviewPage() {
               <>
                 <strong>Veiligheidsmaatregelen:</strong>
                 {renderList(client.signaling_plan.red.safety)}
+
                 <strong>Contactpersonen / wie bellen:</strong>
                 {renderList(client.signaling_plan.red.contact)}
               </>
@@ -185,7 +206,7 @@ export default function ClientOverviewPage() {
           </div>
         )}
 
-        {/* DOCUMENTEN */}
+        {/* Documenten */}
         {activeTab === "Documenten" && (
           <div>
             <h2>Documenten</h2>
@@ -193,7 +214,7 @@ export default function ClientOverviewPage() {
           </div>
         )}
 
-        {/* EVALUATIE */}
+        {/* Evaluatie */}
         {activeTab === "Evaluatie" && (
           <div>
             <h2>Evaluatie</h2>
@@ -201,7 +222,7 @@ export default function ClientOverviewPage() {
           </div>
         )}
 
-        {/* DAGRAPPORTAGE */}
+        {/* Dagrapportage */}
         {activeTab === "Dagrapportage" && (
           <div>
             <h2>Dagrapportage</h2>

@@ -1,41 +1,65 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import styles from "./ClientsList.module.css";
-import clients from "../../data/clients.json";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebase";
+import "./ClientsList.module.css";
 
-export default function ClientsList() {
-  const [search, setSearch] = useState("");
+interface ClientsListProps {
+  user: any;
+}
 
-  const filteredClients = clients.filter((c) =>
-    c.name.toLowerCase().startsWith(search.toLowerCase())
-  );
+interface ClientData {
+  firestoreId: string;
+  name: string;
+  photo?: string;
+  [key: string]: any;
+}
 
-  
+export default function ClientsListPage({ user }: ClientsListProps) {
+  const [clients, setClients] = useState<ClientData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchClients() {
+      try {
+        const snap = await getDocs(collection(db, "clients"));
+
+        let data: ClientData[] = snap.docs.map(doc => ({
+          firestoreId: doc.id,
+          ...doc.data()
+        })) as ClientData[];
+
+        // 🔥 Rol-filter
+        if (user.role === "ouder") {
+          data = data.filter(c => c.name === "Spongebob");
+        }
+
+        setClients(data);
+      } catch (err) {
+        console.error("Fout bij ophalen cliënten:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchClients();
+  }, [user]);
+
+  if (loading) return <p>Bezig met laden...</p>;
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Cliënten</h1>
+    <div className="clientsListContainer">
+      <h1>Cliënten</h1>
 
-      <input
-        type="text"
-        placeholder="Zoeken..."
-        className={styles.search}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-
-      <div className={styles.list}>
-        {filteredClients.map((c) => (
+      <div className="clientsGrid">
+        {clients.map((c) => (
           <Link
-            to={`/client/${(c.id)}`}
-            key={c.id}
-            className={styles.card}
+            key={c.firestoreId}
+            to={`/client/${c.firestoreId}`}
+            className="clientCard"
           >
-            <img src={c.photo} className={styles.photo} alt={c.name} />
-            <div>
-              <h2 className={styles.name}>{c.name}</h2>
-              <p className={styles.info}>Leeftijd: {c.age}</p>
-            </div>
+            <img src={c.photo} alt={c.name} className="clientPhoto" />
+            <h2>{c.name}</h2>
           </Link>
         ))}
       </div>
