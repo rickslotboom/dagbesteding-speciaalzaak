@@ -19,7 +19,6 @@ const tabs = [
   "Dagrapportage",
 ];
 
-// 🔥 VOEG USER PROP TOE
 interface ClientOverviewPageProps {
   user: any;
 }
@@ -31,61 +30,29 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // 🔥 DEBUG: Check authenticatie bij laden component
   useEffect(() => {
     const auth = getAuth();
     console.log("🔐 Current user:", auth.currentUser);
-    console.log("🔐 User ID:", auth.currentUser?.uid);
-    console.log("🔐 Email:", auth.currentUser?.email);
-    
-    if (!auth.currentUser) {
-      console.error("❌ GEEN GEBRUIKER INGELOGD!");
-    }
   }, []);
 
-  // -----------------------------------------
-  // 🔥 BESTAND SELECTEREN
-  // -----------------------------------------
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    console.log("📄 Bestand geselecteerd:", file.name);
-    console.log("📄 Bestand grootte:", file.size, "bytes");
-    console.log("📄 Bestand type:", file.type);
-    
     setSelectedFile(file);
   }
 
-  // -----------------------------------------
-  // 🔥 UPLOAD KNOP
-  // -----------------------------------------
   async function handleUpload() {
     if (!selectedFile) return alert("Selecteer eerst een bestand.");
 
-    // 🔥 DEBUG: Check authenticatie voor upload
     const auth = getAuth();
-    console.log("🚀 Starting upload...");
-    console.log("🚀 User authenticated:", !!auth.currentUser);
-    console.log("🚀 Client ID:", id);
-    console.log("🚀 File name:", selectedFile.name);
 
     try {
       const fileRef = ref(storage, `clients/${id}/documents/${selectedFile.name}`);
-      console.log("📁 Storage path:", `clients/${id}/documents/${selectedFile.name}`);
 
-      // 🔥 DEBUG: Upload starten
-      console.log("⬆️ Uploading bytes...");
       await uploadBytes(fileRef, selectedFile);
-      console.log("✅ Upload succesvol!");
 
-      // 🔥 DEBUG: Download URL ophalen
-      console.log("🔗 Ophalen download URL...");
       const url = await getDownloadURL(fileRef);
-      console.log("✅ Download URL:", url);
 
-      // 🔥 DEBUG: Firestore updaten
-      console.log("💾 Opslaan in Firestore...");
       await updateDoc(doc(db, "clients", id!), {
         documents: arrayUnion({
           name: selectedFile.name,
@@ -93,9 +60,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
           createdAt: new Date().toISOString(),
         }),
       });
-      console.log("✅ Firestore bijgewerkt!");
 
-      // State verversen
       setClient((prev: any) => ({
         ...prev,
         documents: [
@@ -106,61 +71,45 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
 
       alert("Document geüpload!");
       setSelectedFile(null);
-      
+
     } catch (error: any) {
-      // 🔥 DEBUG: Foutafhandeling
-      console.error("❌ UPLOAD FOUT:", error);
-      console.error("❌ Error code:", error.code);
-      console.error("❌ Error message:", error.message);
-      
-      if (error.code === "storage/unauthorized") {
-        alert("Je hebt geen toestemming om bestanden te uploaden. Check Firebase Storage Rules.");
-      } else {
-        alert(`Upload fout: ${error.message}`);
-      }
+      console.error("❌ Upload fout:", error);
+      alert(`Upload fout: ${error.message}`);
     }
   }
 
   async function handleDeleteDocument(docItem: any) {
-  if (!confirm(`Weet je zeker dat je ${docItem.name} wilt verwijderen?`)) return;
+    if (!confirm(`Weet je zeker dat je ${docItem.name} wilt verwijderen?`)) return;
 
-  try {
-    // 1. Verwijder uit Storage
-    const fileRef = ref(storage, `clients/${id}/documents/${docItem.name}`);
-    await deleteObject(fileRef);
+    try {
+      const fileRef = ref(storage, `clients/${id}/documents/${docItem.name}`);
+      await deleteObject(fileRef);
 
-    // 2. Verwijder uit Firestore
-    await updateDoc(doc(db, "clients", id!), {
-      documents: arrayRemove(docItem),
-    });
+      await updateDoc(doc(db, "clients", id!), {
+        documents: arrayRemove(docItem),
+      });
 
-    // 3. State bijwerken
-    setClient((prev: any) => ({
-      ...prev,
-      documents: prev.documents.filter((d: any) => d.name !== docItem.name),
-    }));
+      setClient((prev: any) => ({
+        ...prev,
+        documents: prev.documents.filter((d: any) => d.name !== docItem.name),
+      }));
 
-    alert("Document verwijderd!");
-  } catch (err) {
-    console.error("❌ Delete fout:", err);
-    alert("Verwijderen mislukt: " + (err as any).message);
+      alert("Document verwijderd!");
+    } catch (err) {
+      console.error("❌ Delete fout:", err);
+      alert("Verwijderen mislukt: " + (err as any).message);
+    }
   }
-}
 
-  // 🔥 1 CLIENT LADEN
   useEffect(() => {
     async function load() {
-      console.log("📥 Loading client:", id);
-      
       try {
         const refDoc = doc(db, "clients", id as string);
         const snap = await getDoc(refDoc);
 
         if (snap.exists()) {
-          console.log("✅ Client gevonden:", snap.data());
           setClient({ id: snap.id, ...snap.data() });
         } else {
-          console.warn("⚠️ Client niet gevonden");
           setClient(undefined);
         }
       } catch (error) {
@@ -188,221 +137,212 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   };
 
   return (
-    <div className="container">
-      <header className="header">
-        <img src={client.photo} alt={client.name} className="photo" />
-        <div className="headerInfo">
-          <h1>{client.name}</h1>
-          <p>Leeftijd: {client.age}</p>
-        </div>
-      </header>
+    <div className="page-content"> 
+    <div className="pageContainer">
 
-      <nav className="tabs">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            className={`tabButton ${activeTab === t ? "active" : ""}`}
-            onClick={() => setActiveTab(t)}
-          >
-            {t}
-          </button>
-        ))}
-      </nav>
-
-      <section className="tabContent">
-        {/* PROFIEL */}
-        {activeTab === "Profiel" && (
-          <div>
-            <h2>Basisgegevens</h2>
-            <p><strong>Adres:</strong> {client.address}</p>
-            <p><strong>Contactpersoon:</strong> {client.contact_person}</p>
-            <p><strong>Medicatie:</strong> {client.medication}</p>
-
-            <h3>Hobby's & interesses</h3>
-            {renderList(client.hobbies)}
-
-            <h3>Wat geeft rust bij overprikkeling</h3>
-            <p>{client.calming || "Niet ingevuld."}</p>
-
-            <h3>Communicatievoorkeuren</h3>
-            {renderList(client.communication)}
+      <div className="container">
+        <header className="header">
+          <img src={client.photo} alt={client.name} className="photo" />
+          <div className="headerInfo">
+            <h1>{client.name}</h1>
+            <p>Leeftijd: {client.age}</p>
           </div>
-        )}
+        </header>
 
-        {/* Hulpvragen & Doelen */}
-        {activeTab === "Hulpvragen & Doelen" && (
-          <div>
-            <h2>Hulpvragen</h2>
-            <p><strong>Cliënt:</strong> {client.help_requests}</p>
-            <p><strong>Ouders:</strong> {client.parent_requests}</p>
+        <nav className="tabs">
+          {tabs.map((t) => (
+            <button
+              key={t}
+              className={`tabButton ${activeTab === t ? "active" : ""}`}
+              onClick={() => setActiveTab(t)}
+            >
+              {t}
+            </button>
+          ))}
+        </nav>
 
-            <h3>Doelen</h3>
-            <ul>
-              {client.goals?.length ? (
-                client.goals.map((g: any) => (
-                  <li key={g.id}>
-                    <strong>{g.title}</strong> — {g.status}{" "}
-                    {g.short_term ? "(Kort termijn)" : ""}
-                    <br />
-                    Einddatum: {g.end_date}
-                    <br />
-                    {g.details}
-                  </li>
-                ))
-              ) : (
-                <li>Geen doelen gevonden.</li>
-              )}
-            </ul>
-          </div>
-        )}
+        <section className="tabContent">
+          {activeTab === "Profiel" && (
+            <div>
+              <h2>Basisgegevens</h2>
+              <p><strong>Adres:</strong> {client.address}</p>
+              <p><strong>Contactpersoon:</strong> {client.contact_person}</p>
+              <p><strong>Medicatie:</strong> {client.medication}</p>
 
-        {/* Ondersteuning */}
-        {activeTab === "Ondersteuning" && (
-          <div>
-            <h2>Ondersteuning & Aanpak</h2>
+              <h3>Hobby's & interesses</h3>
+              {renderList(client.hobbies)}
 
-            <h3>Wat doet de begeleider?</h3>
-            <p>{client.support_staff || "Geen gegevens ingevuld."}</p>
+              <h3>Wat geeft rust bij overprikkeling</h3>
+              <p>{client.calming || "Niet ingevuld."}</p>
 
-            <h3>Wat doet de cliënt?</h3>
-            <p>{client.support_client || "Geen gegevens ingevuld."}</p>
+              <h3>Communicatievoorkeuren</h3>
+              {renderList(client.communication)}
+            </div>
+          )}
 
-            <h3>Frequentie</h3>
-            <p>{client.support_frequency || "Niet ingevuld"}</p>
+          {activeTab === "Hulpvragen & Doelen" && (
+            <div>
+              <h2>Hulpvragen</h2>
+              <p><strong>Cliënt:</strong> {client.help_requests}</p>
+              <p><strong>Ouders:</strong> {client.parent_requests}</p>
 
-            <h3>Locatie</h3>
-            <p>{client.support_location || "Niet ingevuld"}</p>
-
-            <h3>Hulpmiddelen</h3>
-            <p>{client.support_tools || "Geen hulpmiddelen geregistreerd."}</p>
-          </div>
-        )}
-
-        {/* Vaste taken */}
-        {activeTab === "Vaste Taken" && (
-          <div>
-            <h2>Vaste Taken</h2>
-
-            <h3>Sterke kanten</h3>
-            {renderList(client.strengths)}
-
-            <h3>Taken waar cliënt goed in is</h3>
-            {renderList(client.tasks_good_at)}
-
-            <h3>Vaste taken</h3>
-            {renderList(client.fixed_tasks)}
-          </div>
-        )}
-
-        {/* Signaalplan */}
-        {activeTab === "Signaalplan" && (
-          <div>
-            <h2>Signaleringsplan bij spanning</h2>
-
-            <h3>🟢 Groene fase — Wat gaat goed?</h3>
-            {client.signaling_plan?.green
-              ? renderList(client.signaling_plan.green.goes_well)
-              : <p>Geen gegevens ingevuld.</p>
-            }
-
-            <h3>🟠 Oranje fase — Eerste signalen & aanpak</h3>
-            {client.signaling_plan?.orange ? (
-              <>
-                <strong>Signalen:</strong>
-                {renderList(client.signaling_plan.orange.signals)}
-
-                <strong>Wat helpt:</strong>
-                {renderList(client.signaling_plan.orange.what_helps)}
-
-                <strong>Wat niet helpt:</strong>
-                {renderList(client.signaling_plan.orange.what_not_helps)}
-              </>
-            ) : (
-              <p>Geen gegevens ingevuld.</p>
-            )}
-
-            <h3>🔴 Rode fase — Veiligheidsafspraken</h3>
-            {client.signaling_plan?.red ? (
-              <>
-                <strong>Veiligheidsmaatregelen:</strong>
-                {renderList(client.signaling_plan.red.safety)}
-
-                <strong>Contactpersonen / wie bellen:</strong>
-                {renderList(client.signaling_plan.red.contact)}
-              </>
-            ) : (
-              <p>Geen gegevens ingevuld.</p>
-            )}
-          </div>
-        )}
-
-        {/* Documenten */}
-        {activeTab === "Documenten" && (
-          <div>
-            <h2>Documenten</h2>
-
-            {/* BESTAND SELECTEREN */}
-            <input
-              type="file"
-              onChange={handleFileSelect}
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-            />
-
-            {/* UPLOAD KNOP */}
-            {selectedFile && (
-              <button onClick={handleUpload} style={{ marginTop: "10px" }}>
-                Upload document: {selectedFile.name}
-              </button>
-            )}
-
-            <h3>Bestaande documenten</h3>
-            {client.documents?.length ? (
+              <h3>Doelen</h3>
               <ul>
-                {client.documents.map((doc: any, i: number) => (
-                  <li key={i}>
-                    <a 
-                      href={doc.url} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      onClick={() => {
-                        console.log("📂 Opening document:", doc.name);
-                        console.log("📂 URL:", doc.url);
-                      }}
-                    >
-                      {doc.name}
-                    </a>
-
-                    <button 
-    onClick={() => handleDeleteDocument(doc)} 
-    style={{ color: "red", cursor: "pointer" }}
-  >
-    ❌ Verwijderen
-  </button>
-                  </li>
-                ))}
+                {client.goals?.length ? (
+                  client.goals.map((g: any) => (
+                    <li key={g.id}>
+                      <strong>{g.title}</strong> — {g.status}{" "}
+                      {g.short_term ? "(Kort termijn)" : ""}
+                      <br />
+                      Einddatum: {g.end_date}
+                      <br />
+                      {g.details}
+                    </li>
+                  ))
+                ) : (
+                  <li>Geen doelen gevonden.</li>
+                )}
               </ul>
-            ) : (
-              <p>Geen documenten geüpload.</p>
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Evaluatie */}
-        {activeTab === "Evaluatie" && (
-          <div>
-            <h2>Evaluatie</h2>
-            <p>Evaluatiegegevens en voortgangsverslagen.</p>
-          </div>
-        )}
+          {activeTab === "Ondersteuning" && (
+            <div>
+              <h2>Ondersteuning & Aanpak</h2>
 
-        {/* Dagrapportage */}
-        {activeTab === "Dagrapportage" && (
-          <div>
-            <h2>Dagrapportage</h2>
-            <p>Dagelijkse observaties en notities.</p>
-          </div>
-        )}
-      </section>
+              <h3>Wat doet de begeleider?</h3>
+              <p>{client.support_staff || "Geen gegevens ingevuld."}</p>
+
+              <h3>Wat doet de cliënt?</h3>
+              <p>{client.support_client || "Geen gegevens ingevuld."}</p>
+
+              <h3>Frequentie</h3>
+              <p>{client.support_frequency || "Niet ingevuld"}</p>
+
+              <h3>Locatie</h3>
+              <p>{client.support_location || "Niet ingevuld"}</p>
+
+              <h3>Hulpmiddelen</h3>
+              <p>{client.support_tools || "Geen hulpmiddelen geregistreerd."}</p>
+            </div>
+          )}
+
+          {activeTab === "Vaste Taken" && (
+            <div>
+              <h2>Vaste Taken</h2>
+
+              <h3>Sterke kanten</h3>
+              {renderList(client.strengths)}
+
+              <h3>Taken waar cliënt goed in is</h3>
+              {renderList(client.tasks_good_at)}
+
+              <h3>Vaste taken</h3>
+              {renderList(client.fixed_tasks)}
+            </div>
+          )}
+
+          {activeTab === "Signaalplan" && (
+            <div>
+              <h2>Signaleringsplan bij spanning</h2>
+
+              <h3>🟢 Groene fase — Wat gaat goed?</h3>
+              {client.signaling_plan?.green
+                ? renderList(client.signaling_plan.green.goes_well)
+                : <p>Geen gegevens ingevuld.</p>
+              }
+
+              <h3>🟠 Oranje fase — Eerste signalen & aanpak</h3>
+              {client.signaling_plan?.orange ? (
+                <>
+                  <strong>Signalen:</strong>
+                  {renderList(client.signaling_plan.orange.signals)}
+
+                  <strong>Wat helpt:</strong>
+                  {renderList(client.signaling_plan.orange.what_helps)}
+
+                  <strong>Wat niet helpt:</strong>
+                  {renderList(client.signaling_plan.orange.what_not_helps)}
+                </>
+              ) : (
+                <p>Geen gegevens ingevuld.</p>
+              )}
+
+              <h3>🔴 Rode fase — Veiligheidsafspraken</h3>
+              {client.signaling_plan?.red ? (
+                <>
+                  <strong>Veiligheidsmaatregelen:</strong>
+                  {renderList(client.signaling_plan.red.safety)}
+
+                  <strong>Contactpersonen / wie bellen:</strong>
+                  {renderList(client.signaling_plan.red.contact)}
+                </>
+              ) : (
+                <p>Geen gegevens ingevuld.</p>
+              )}
+            </div>
+          )}
+
+          {activeTab === "Documenten" && (
+            <div>
+              <h2>Documenten</h2>
+
+              <input
+                type="file"
+                onChange={handleFileSelect}
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              />
+
+              {selectedFile && (
+                <button onClick={handleUpload} style={{ marginTop: "10px" }}>
+                  Upload document: {selectedFile.name}
+                </button>
+              )}
+
+              <h3>Bestaande documenten</h3>
+              {client.documents?.length ? (
+                <ul>
+                  {client.documents.map((doc: any, i: number) => (
+                    <li key={i}>
+                      <a 
+                        href={doc.url} 
+                        target="_blank" 
+                        rel="noreferrer"
+                      >
+                        {doc.name}
+                      </a>
+
+                      <button 
+                        onClick={() => handleDeleteDocument(doc)} 
+                        style={{ color: "red", cursor: "pointer" }}
+                      >
+                        ❌ Verwijderen
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Geen documenten geüpload.</p>
+              )}
+            </div>
+          )}
+
+          {activeTab === "Evaluatie" && (
+            <div>
+              <h2>Evaluatie</h2>
+              <p>Evaluatiegegevens en voortgangsverslagen.</p>
+            </div>
+          )}
+
+          {activeTab === "Dagrapportage" && (
+            <div>
+              <h2>Dagrapportage</h2>
+              <p>Dagelijkse observaties en notities.</p>
+            </div>
+          )}
+        </section>
+      </div>
+</div>
     </div>
   );
 }

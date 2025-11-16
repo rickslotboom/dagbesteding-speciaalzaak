@@ -40,3 +40,28 @@
 .read-the-docs {
   color: #888;
 }
+
+.page-content {
+  padding-bottom: 90px; /* iets meer dan de height van je bottomnav */
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.app-content {
+  min-height: 100vh;
+  overflow-y: auto;
+  padding-top: 60px;     /* ruimte voor top button/header */
+  padding-bottom: 90px;  /* ruimte voor bottomnav */
+}
+
+/* optional */
+.logout-button {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 999;
+}

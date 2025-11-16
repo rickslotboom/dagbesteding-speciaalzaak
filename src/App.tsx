@@ -19,15 +19,21 @@ export default function App() {
 
   return (
     <Router>
-      {/* 🔥 Deze logout-knop staat buiten AppRouter => zichtbaar op ALLE pagina's */}
-      <div style={{ position: "fixed", top: 12, right: 12, zIndex: 999 }}>
-        <LogoutButton onLogout={() => setUser(null)} />
+
+      {/* 🔥 Scrollbare hoofdcontainer */}
+      <div className="app-content">
+
+        {/* Logout button blijft boven content */}
+        <div className="logout-button">
+          <LogoutButton onLogout={() => setUser(null)} />
+        </div>
+
+        {/* Alle pagina's */}
+        <AppRouter user={user} />
+
       </div>
 
-      {/* 🔥 Router pages */}
-      <AppRouter user={user} />
-
-      {/* 🔥 Altijd zichtbaar bottom navigation */}
+      {/* Bottom nav blijft fixed */}
       <BottomNav user={user} />
     </Router>
   );
