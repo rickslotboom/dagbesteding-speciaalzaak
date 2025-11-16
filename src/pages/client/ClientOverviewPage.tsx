@@ -44,8 +44,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   async function handleUpload() {
     if (!selectedFile) return alert("Selecteer eerst een bestand.");
 
-    const auth = getAuth();
-
+    
     try {
       const fileRef = ref(storage, `clients/${id}/documents/${selectedFile.name}`);
 
