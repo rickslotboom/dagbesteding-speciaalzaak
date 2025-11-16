@@ -5,6 +5,8 @@ import { db, storage } from "../../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAuth } from "firebase/auth";
 import "./ClientOverviewPage.module.css";
+import { deleteObject } from "firebase/storage";
+import { arrayRemove } from "firebase/firestore"
 
 const tabs = [
   "Profiel",
@@ -22,7 +24,7 @@ interface ClientOverviewPageProps {
   user: any;
 }
 
-export default function ClientOverviewPage({ user }: ClientOverviewPageProps) {
+export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   const { id } = useParams();
 
   const [client, setClient] = useState<any | null>(null);
@@ -118,6 +120,32 @@ export default function ClientOverviewPage({ user }: ClientOverviewPageProps) {
       }
     }
   }
+
+  async function handleDeleteDocument(docItem: any) {
+  if (!confirm(`Weet je zeker dat je ${docItem.name} wilt verwijderen?`)) return;
+
+  try {
+    // 1. Verwijder uit Storage
+    const fileRef = ref(storage, `clients/${id}/documents/${docItem.name}`);
+    await deleteObject(fileRef);
+
+    // 2. Verwijder uit Firestore
+    await updateDoc(doc(db, "clients", id!), {
+      documents: arrayRemove(docItem),
+    });
+
+    // 3. State bijwerken
+    setClient((prev: any) => ({
+      ...prev,
+      documents: prev.documents.filter((d: any) => d.name !== docItem.name),
+    }));
+
+    alert("Document verwijderd!");
+  } catch (err) {
+    console.error("❌ Delete fout:", err);
+    alert("Verwijderen mislukt: " + (err as any).message);
+  }
+}
 
   // 🔥 1 CLIENT LADEN
   useEffect(() => {
@@ -343,6 +371,13 @@ export default function ClientOverviewPage({ user }: ClientOverviewPageProps) {
                     >
                       {doc.name}
                     </a>
+
+                    <button 
+    onClick={() => handleDeleteDocument(doc)} 
+    style={{ color: "red", cursor: "pointer" }}
+  >
+    ❌ Verwijderen
+  </button>
                   </li>
                 ))}
               </ul>

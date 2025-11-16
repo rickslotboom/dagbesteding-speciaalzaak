@@ -54,6 +54,11 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+html, body {
+  height: 100%;
+  overflow-y: auto; /* 🔥 Activeert scroll voor hele pagina */
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

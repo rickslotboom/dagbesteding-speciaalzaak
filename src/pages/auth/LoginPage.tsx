@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs} from "firebase/firestore";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "../../firebase";
 import sha256 from "crypto-js/sha256";
