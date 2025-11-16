@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../firebase";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { db, auth } from "../../firebase";
 import sha256 from "crypto-js/sha256";
 
 export default function LoginPage({ onLogin }: { onLogin: (user: any) => void }) {
@@ -12,50 +13,76 @@ export default function LoginPage({ onLogin }: { onLogin: (user: any) => void })
     e.preventDefault();
     setError("");
 
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("username", "==", username));
-    const snap = await getDocs(q);
+    try {
+      // 1️⃣ Check of gebruiker bestaat in Firestore
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("username", "==", username));
+      const snap = await getDocs(q);
 
+      if (snap.empty) {
+        setError("Gebruiker bestaat niet");
+        return;
+      }
 
+      const userDoc = snap.docs[0];
+      const userData = userDoc.data();
 
-    if (snap.empty) {
-      setError("Gebruiker bestaat niet");
-      return;
+      console.log("🔐 Ingevoerde wachtwoord:", password);
+      console.log("🔐 SHA256 lokaal:", sha256(password).toString());
+      console.log("🔐 SHA256 in Firestore:", userData.passwordHash);
+
+      // 2️⃣ Check wachtwoord hash
+      const hash = sha256(password).toString();
+      if (hash !== userData.passwordHash) {
+        setError("Wachtwoord onjuist");
+        return;
+      }
+
+      console.log("✅ Wachtwoord correct - logging in met Firebase Auth...");
+
+      // 3️⃣ Log in met Firebase Authentication
+      // We gebruiken username@zorgapp.local als email format
+      const firebaseEmail = `${username}@zorgapp.local`;
+      
+      try {
+        // Probeer in te loggen met Firebase Auth
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          firebaseEmail,
+          password
+        );
+
+        console.log("✅ Firebase Auth user:", userCredential.user);
+        console.log("✅ Firebase UID:", userCredential.user.uid);
+
+      } catch (authError: any) {
+        console.log("⚠️ Firebase Auth user bestaat nog niet, wordt aangemaakt...");
+        
+        // Als gebruiker niet bestaat in Firebase Auth, toon instructie
+        // Je moet deze gebruikers handmatig aanmaken in Firebase Console
+        // of via een admin script
+        setError(
+          `Gebruiker "${username}" moet nog worden aangemaakt in Firebase Authentication. ` +
+          `Maak een account aan met email: ${firebaseEmail}`
+        );
+        return;
+      }
+
+      // 4️⃣ Succes! Stuur user data door
+      console.log("🔥 Firestore user document:", userData);
+      console.log("🔥 clientId in Firestore:", userData.clientId);
+
+      onLogin({
+        id: userDoc.id,
+        username: userData.username,
+        role: userData.role,
+        clientId: userData.clientId
+      });
+
+    } catch (error: any) {
+      console.error("❌ Login error:", error);
+      setError(`Login fout: ${error.message}`);
     }
-
-    const user = snap.docs[0].data();
-
-        console.log("🔐 Ingevoerde wachtwoord:", password);
-console.log("🔐 SHA256 lokaal:", sha256(password).toString());
-console.log("🔐 SHA256 in Firestore:", user.passwordHash);
-console.log("Match?", sha256(password).toString() === user.passwordHash);
-
-
-    
-
-    const hash = sha256(password).toString();
-
-    if (hash !== user.passwordHash) {
-      setError("Wachtwoord onjuist");
-      return;
-    }
-
-    console.log("🔥 Firestore user document:", user);
-console.log("🔥 clientId in Firestore:", user.clientId);
-console.log("🔥 user object dat naar App gaat:", {
-  id: snap.docs[0].id,
-  username: user.username,
-  role: user.role,
-  clientId: user.clientId
-});
-
-    // Succes!
-    onLogin({
-      id: snap.docs[0].id,
-      username: user.username,
-      role: user.role,
-      clientId: user.clientId
-    });
   }
 
   return (
