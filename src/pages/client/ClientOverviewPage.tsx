@@ -459,6 +459,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
                 <h3 style={{ marginTop: "20px" }}>Eerdere rapporten</h3>
 
                 {client.reports?.length ? (
+  <div className="reports-scroll-container">
   <div className="reports-list">
     {client.reports
       .sort(
@@ -479,17 +480,19 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
           </div>
         </div>
       ))}
+      </div>
   </div>
 ) : (
   <p>Geen rapporten aangemaakt.</p>
 )}
 
+
               </div>
             )}
-
           </section>
         </div>
       </div>
     </div>
+
   );
 }

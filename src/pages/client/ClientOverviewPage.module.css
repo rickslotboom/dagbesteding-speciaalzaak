@@ -14,3 +14,10 @@
   padding-bottom: 80px; /* hoogte van je bottomnav + extra ruimte */
 }
 
+.reports-scroll-container {
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+
