@@ -192,53 +192,62 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   return (
     <div className="page-content">
       {openReport && (
-  <div
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: "rgba(0,0,0,0.5)",
-      backdropFilter: "blur(3px)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 9999,
-    }}
-    onClick={() => setOpenReport(null)}
-  >
-    <div
-      style={{
-        background: "white",
-        padding: "20px",
-        borderRadius: "8px",
-        width: "90%",
-        maxWidth: "500px",
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <h2>Rapport – {openReport.date}</h2>
-      <p style={{ whiteSpace: "pre-line", marginTop: "10px" }}>
-        {openReport.text}
-      </p>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(3px)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+          onClick={() => setOpenReport(null)}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              width: "90%",
+              maxWidth: "500px",
+              maxHeight: "80vh",
+              display: "flex",
+              flexDirection: "column",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2>Rapport – {openReport.date}</h2>
+            <div style={{ 
+              whiteSpace: "pre-line", 
+              marginTop: "10px",
+              overflowY: "auto",
+              flex: 1,
+              marginBottom: "10px"
+            }}>
+              {openReport.text}
+            </div>
 
-      <button
-        style={{ marginTop: "20px", background: "red", color: "white" }}
-        onClick={() => {
-          deleteReport(openReport.id);
-          setOpenReport(null);
-        }}
-      >
-        ❌ Rapport verwijderen
-      </button>
+            <button
+              style={{ marginTop: "20px", background: "red", color: "white" }}
+              onClick={() => {
+                deleteReport(openReport.id);
+                setOpenReport(null);
+              }}
+            >
+              ❌ Rapport verwijderen
+            </button>
 
-      <button style={{ marginTop: "10px" }} onClick={() => setOpenReport(null)}>
-        Sluiten
-      </button>
-    </div>
-  </div>
-)}
+            <button style={{ marginTop: "10px" }} onClick={() => setOpenReport(null)}>
+              Sluiten
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="pageContainer">
         <div className="container">
@@ -459,33 +468,32 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
                 <h3 style={{ marginTop: "20px" }}>Eerdere rapporten</h3>
 
                 {client.reports?.length ? (
-  <div className="reports-scroll-container">
-  <div className="reports-list">
-    {client.reports
-      .sort(
-        (a: any, b: any) =>
-          new Date(b.createdAt).getTime() -
-          new Date(a.createdAt).getTime()
-      )
-      .map((r: any) => (
-        <div
-          key={r.id}
-          className="report-card"
-          onClick={() => setOpenReport(r)}
-          style={{ cursor: "pointer" }}
-        >
-          <div className="report-card-date">{r.date}</div>
-          <div className="report-card-text">
-            {r.text.length > 80 ? r.text.slice(0, 80) + "..." : r.text}
-          </div>
-        </div>
-      ))}
-      </div>
-  </div>
-) : (
-  <p>Geen rapporten aangemaakt.</p>
-)}
-
+                  <div className="reports-scroll-container">
+                    <div className="reports-list">
+                      {client.reports
+                        .sort(
+                          (a: any, b: any) =>
+                            new Date(b.createdAt).getTime() -
+                            new Date(a.createdAt).getTime()
+                        )
+                        .map((r: any) => (
+                          <div
+                            key={r.id}
+                            className="report-card"
+                            onClick={() => setOpenReport(r)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <div className="report-card-date">{r.date}</div>
+                            <div className="report-card-text">
+                              {r.text.length > 80 ? r.text.slice(0, 80) + "..." : r.text}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p>Geen rapporten aangemaakt.</p>
+                )}
 
               </div>
             )}
