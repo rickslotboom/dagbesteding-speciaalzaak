@@ -35,6 +35,7 @@ interface ClientOverviewPageProps {
   user?: any;
 }
 
+
 // Helper components BUITEN de main component
 const EditableText = ({
   label,
@@ -147,7 +148,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [newReport, setNewReport] = useState("");
   const [openReport, setOpenReport] = useState<any | null>(null);
- 
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Load client from Firestore
   useEffect(() => {
@@ -318,7 +319,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
       return;
     }
 
-    setIsDeleting(true);
+    (setIsDeleting(true));
 
     try {
       // 1. Verwijder alle documenten uit Storage
@@ -569,7 +570,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
 
           {/* Verwijder client knop */}
 <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
-  <button
+  !isDeleting ? <button
     onClick={handleDeleteClient}
     style={{
       background: "red",
