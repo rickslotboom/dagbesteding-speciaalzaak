@@ -570,19 +570,20 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
 
           {/* Verwijder client knop */}
 <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
-  !isDeleting ? <button
-    onClick={handleDeleteClient}
-    style={{
-      background: "red",
-      color: "white",
-      padding: "10px 14px",
-      borderRadius: "6px",
-      border: "none",
-      cursor: "pointer",
-    }}
-  >
-    ❌ Cliënt volledig verwijderen
-  </button>
+  <button
+  onClick={handleDeleteClient}
+  disabled={isDeleting}
+  style={{
+    background: isDeleting ? "#888" : "red",
+    color: "white",
+    padding: "10px 14px",
+    borderRadius: "6px",
+    border: "none",
+    cursor: isDeleting ? "not-allowed" : "pointer",
+  }}
+>
+  {isDeleting ? "Bezig met verwijderen…" : "❌ Cliënt volledig verwijderen"}
+</button>
 </div>
 
 
