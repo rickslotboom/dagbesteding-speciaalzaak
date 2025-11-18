@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { JSX, useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   doc,
   getDoc,
   updateDoc,
+  deleteDoc,
   arrayUnion,
   arrayRemove,
 } from "firebase/firestore";
@@ -13,6 +14,7 @@ import {
   uploadBytes,
   getDownloadURL,
   deleteObject,
+  listAll,
 } from "firebase/storage";
 import { getAuth } from "firebase/auth";
 
@@ -136,6 +138,7 @@ const EditableCSV = ({
 
 export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [client, setClient] = useState<any | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -144,9 +147,8 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [newReport, setNewReport] = useState("");
   const [openReport, setOpenReport] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  const auth = getAuth();
-
   // Load client from Firestore
   useEffect(() => {
     async function load() {
@@ -303,6 +305,45 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
     } catch (err: any) {
       console.error("Opslaan mislukt:", err);
       alert("Opslaan mislukt: " + err?.message);
+    }
+  }
+
+  // Delete client completely
+  async function handleDeleteClient() {
+    const confirmation = window.prompt(
+      `Weet je ZEKER dat je ${client.name} volledig wilt verwijderen?\n\nTyp "VERWIJDER" om te bevestigen:`
+    );
+
+    if (confirmation !== "VERWIJDER") {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      // 1. Verwijder alle documenten uit Storage
+      try {
+        const storageRef = ref(storage, `clients/${id}/documents`);
+        const fileList = await listAll(storageRef);
+        
+        const deletePromises = fileList.items.map((item) => deleteObject(item));
+        await Promise.all(deletePromises);
+      } catch (storageErr) {
+        console.warn("Fout bij verwijderen storage bestanden:", storageErr);
+        // Ga door zelfs als storage verwijdering faalt
+      }
+
+      // 2. Verwijder het Firestore document
+      await deleteDoc(doc(db, "clients", id!));
+
+      alert(`${client.name} is volledig verwijderd.`);
+      
+      // 3. Navigeer terug naar de clientenlijst
+      navigate("/clients"); // Pas dit pad aan naar jouw route
+    } catch (err: any) {
+      console.error("Verwijderen mislukt:", err);
+      alert("Verwijderen mislukt: " + err?.message);
+      setIsDeleting(false);
     }
   }
 
@@ -525,6 +566,24 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
               </>
             )}
           </div>
+
+          {/* Verwijder client knop */}
+<div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
+  <button
+    onClick={handleDeleteClient}
+    style={{
+      background: "red",
+      color: "white",
+      padding: "10px 14px",
+      borderRadius: "6px",
+      border: "none",
+      cursor: "pointer",
+    }}
+  >
+    ❌ Cliënt volledig verwijderen
+  </button>
+</div>
+
 
           {/* Tab content */}
           <section className="tabContent">
