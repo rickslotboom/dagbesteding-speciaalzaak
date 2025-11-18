@@ -5,6 +5,7 @@ import ClientsListPage from "../pages/client/ClientsList";
 import ClientOverview from "../pages/client/ClientOverviewPage";
 import Agenda from "../pages/agenda/Agenda";
 import Instellingen from "../pages/Instellingen/Instellingen";
+import NewClientPage from "../pages/NewClientPage/NewClientPage";
 
 interface AppRouterProps {
   user: any | null; // later: definieer een echte User interface
@@ -57,7 +58,7 @@ export default function AppRouter({ user }: AppRouterProps) {
 
       <Route path="/agenda" element={<Agenda />} />
       <Route path="/instellingen" element={<Instellingen />} />
-
+      <Route path="/new-client" element={<NewClientPage />} />
       {/* fallback: alles wat niet matched */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

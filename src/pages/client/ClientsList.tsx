@@ -50,7 +50,9 @@ export default function ClientsListPage({ user }: ClientsListProps) {
   return (
     <div className="clientsListContainer">
       <h1>Cliënten</h1>
-
+      <Link to="/new-client" className="addClientButton">
+      + Client toevoegen
+      </Link>
       <div className="clientsGrid">
         {clients.map((c) => (
           <Link
