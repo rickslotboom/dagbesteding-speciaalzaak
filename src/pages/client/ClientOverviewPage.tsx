@@ -1,4 +1,5 @@
-import { JSX, useEffect, useState } from "react";
+import {useEffect, useState } from "react";
+import type { JSX } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   doc,
@@ -16,7 +17,6 @@ import {
   deleteObject,
   listAll,
 } from "firebase/storage";
-import { getAuth } from "firebase/auth";
 
 import "./ClientOverviewPage.module.css";
 
@@ -147,7 +147,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [newReport, setNewReport] = useState("");
   const [openReport, setOpenReport] = useState<any | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+ 
   
   // Load client from Firestore
   useEffect(() => {
