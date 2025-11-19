@@ -57,7 +57,7 @@ export default function AppRouter({ user }: AppRouterProps) {
       />
 
       <Route path="/agenda" element={<Agenda />} />
-      <Route path="/instellingen" element={<Instellingen />} />
+      <Route path="/instellingen" element={<Instellingen user = {user} />} />
       <Route path="/new-client" element={<NewClientPage />} />
       {/* fallback: alles wat niet matched */}
       <Route path="*" element={<Navigate to="/" replace />} />
