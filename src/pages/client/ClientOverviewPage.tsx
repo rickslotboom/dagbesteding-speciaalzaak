@@ -1,4 +1,4 @@
-import {useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { JSX } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -9,6 +9,7 @@ import {
   arrayUnion,
   arrayRemove,
 } from "firebase/firestore";
+
 import { db, storage } from "../../firebase";
 import {
   ref,
@@ -19,6 +20,14 @@ import {
 } from "firebase/storage";
 
 import "./ClientOverviewPage.module.css";
+
+// ⬇️ JOUW HERBRUIKBARE COMPONENTS IMPORTEREN
+import {
+  EditableText,
+  EditableTextarea,
+  EditableCSV,
+} from "../../components/EditableFields"; 
+// <-- pas dit pad aan naar jouw projectstructuur
 
 const tabs = [
   "Profiel",
@@ -35,108 +44,6 @@ interface ClientOverviewPageProps {
   user?: any;
 }
 
-
-// Helper components BUITEN de main component
-const EditableText = ({
-  label,
-  field,
-  placeholder,
-  editData,
-  setEditData,
-  client,
-  isEditing,
-}: {
-  label?: string;
-  field: string;
-  placeholder?: string;
-  editData: any;
-  setEditData: (data: any) => void;
-  client: any;
-  isEditing: boolean;
-}) => {
-  return (
-    <p>
-      {label && <strong>{label} </strong>}
-      {isEditing ? (
-        <input
-          value={editData[field] ?? ""}
-          onChange={(e) => setEditData({ ...editData, [field]: e.target.value })}
-          placeholder={placeholder}
-          style={{ width: "100%" }}
-        />
-      ) : (
-        (client[field] ?? "–")
-      )}
-    </p>
-  );
-};
-
-const EditableTextarea = ({
-  label,
-  field,
-  placeholder,
-  editData,
-  setEditData,
-  client,
-  isEditing,
-}: {
-  label?: string;
-  field: string;
-  placeholder?: string;
-  editData: any;
-  setEditData: (data: any) => void;
-  client: any;
-  isEditing: boolean;
-}) => {
-  return (
-    <div>
-      {label && <strong>{label}</strong>}
-      {isEditing ? (
-        <textarea
-          value={editData[field] ?? ""}
-          onChange={(e) => setEditData({ ...editData, [field]: e.target.value })}
-          placeholder={placeholder}
-          style={{ width: "100%", minHeight: 80 }}
-        />
-      ) : (
-        <p style={{ whiteSpace: "pre-line" }}>{client[field] ?? "–"}</p>
-      )}
-    </div>
-  );
-};
-
-const EditableCSV = ({
-  label,
-  field,
-  editData,
-  setEditData,
-  client,
-  isEditing,
-  renderList,
-}: {
-  label?: string;
-  field: string;
-  editData: any;
-  setEditData: (data: any) => void;
-  client: any;
-  isEditing: boolean;
-  renderList: (value: any[]) => JSX.Element;
-}) => (
-  <div>
-    {label && <strong>{label}</strong>}
-    {isEditing ? (
-      <input
-        value={editData[field] ?? ""}
-        onChange={(e) => setEditData({ ...editData, [field]: e.target.value })}
-        placeholder="Komma gescheiden items"
-        style={{ width: "100%" }}
-      />
-    ) : (
-      renderList(client[field])
-    )}
-  </div>
-);
-
 export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -149,7 +56,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
   const [newReport, setNewReport] = useState("");
   const [openReport, setOpenReport] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Load client from Firestore
   useEffect(() => {
     async function load() {
@@ -569,23 +476,22 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
           </div>
 
           {/* Verwijder client knop */}
-<div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
-  <button
-  onClick={handleDeleteClient}
-  disabled={isDeleting}
-  style={{
-    background: isDeleting ? "#888" : "red",
-    color: "white",
-    padding: "10px 14px",
-    borderRadius: "6px",
-    border: "none",
-    cursor: isDeleting ? "not-allowed" : "pointer",
-  }}
->
-  {isDeleting ? "Bezig met verwijderen…" : "❌ Cliënt volledig verwijderen"}
-</button>
-</div>
-
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
+            <button
+              onClick={handleDeleteClient}
+              disabled={isDeleting}
+              style={{
+                background: isDeleting ? "#888" : "red",
+                color: "white",
+                padding: "10px 14px",
+                borderRadius: "6px",
+                border: "none",
+                cursor: isDeleting ? "not-allowed" : "pointer",
+              }}
+            >
+              {isDeleting ? "Bezig met verwijderen…" : "❌ Cliënt volledig verwijderen"}
+            </button>
+          </div>
 
           {/* Tab content */}
           <section className="tabContent">
