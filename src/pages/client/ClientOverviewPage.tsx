@@ -1,33 +1,19 @@
-import { useEffect, useState } from "react";
-import type { JSX } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  arrayUnion,
-  arrayRemove,
-} from "firebase/firestore";
-
-import { db, storage } from "../../firebase";
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-  listAll,
-} from "firebase/storage";
 
 import "./ClientOverviewPage.module.css";
 
-// ⬇️ JOUW HERBRUIKBARE COMPONENTS IMPORTEREN
+// Herbruikbare components
 import {
   EditableText,
   EditableTextarea,
   EditableCSV,
-} from "../../components/EditableFields"; 
-// <-- pas dit pad aan naar jouw projectstructuur
+} from "../../components/EditableFields";
+
+// Custom hooks
+import { useClientData } from "../../hooks/useClientData";
+import { useClientReports } from "../../hooks/useClientReports";
+import { useClientDocuments } from "../../hooks/useClientDocuments";
 
 const tabs = [
   "Profiel",
@@ -40,49 +26,28 @@ const tabs = [
   "Dagrapportage",
 ];
 
-interface ClientOverviewPageProps {
-  user?: any;
-}
-
-export default function ClientOverviewPage({}: ClientOverviewPageProps) {
+export default function ClientOverviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  const [client, setClient] = useState<any | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<any>({});
   const [activeTab, setActiveTab] = useState(tabs[0]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [newReport, setNewReport] = useState("");
-  const [openReport, setOpenReport] = useState<any | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Load client from Firestore
-  useEffect(() => {
-    async function load() {
-      try {
-        const refDoc = doc(db, "clients", id as string);
-        const snap = await getDoc(refDoc);
+  // Custom hooks voor state management
+  const {
+    client,
+    setClient,
+    isEditing,
+    editData,
+    setEditData,
+    startEdit,
+    cancelEdit,
+    saveChanges,
+    deleteClient,
+  } = useClientData(id);
 
-        if (snap.exists()) {
-          const data = { id: snap.id, ...snap.data() };
-          setClient(data);
-          // Alleen editData updaten als we NIET aan het bewerken zijn
-          if (!isEditing) {
-            setEditData(data);
-          }
-        } else {
-          setClient(undefined);
-        }
-      } catch (err) {
-        console.error("Fout bij laden client:", err);
-        setClient(undefined);
-      }
-    }
-    load();
-  }, [id]); // isEditing NIET toevoegen aan dependencies!
+  const reports = useClientReports(id, setClient);
+  const documents = useClientDocuments(id, setClient);
 
-  // Helper: render arrays nicely
+  // Helper voor arrays renderen
   const renderList = (value: any[]) => {
     if (!value) return <p className="empty">Niet ingevuld.</p>;
     if (Array.isArray(value))
@@ -96,286 +61,13 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
     return <p>{String(value)}</p>;
   };
 
-  // UI Helper for editing arrays as comma-separated string
-  function arrayToCSV(arr?: any[]) {
-    if (!arr) return "";
-    if (!Array.isArray(arr)) return String(arr);
-    return arr.join(", ");
-  }
-
-  function csvToArray(s: string) {
-    if (!s) return [];
-    return s.split(",").map((x) => x.trim()).filter(Boolean);
-  }
-
-  // Enter edit mode: make sure editData is current client snapshot
-  function handleEdit() {
-    // Maak een kopie van client met correct geconverteerde arrays
-    const initialEditData = {
-      ...client,
-      // Zorg dat alle tekstvelden strings zijn (niet undefined)
-      address: client.address ?? "",
-      contact_person: client.contact_person ?? "",
-      medication: client.medication ?? "",
-      help_requests: client.help_requests ?? "",
-      parent_requests: client.parent_requests ?? "",
-      support_staff: client.support_staff ?? "",
-      support_client: client.support_client ?? "",
-      support_frequency: client.support_frequency ?? "",
-      support_location: client.support_location ?? "",
-      support_tools: client.support_tools ?? "",
-      calming: client.calming ?? "",
-      // Converteer arrays naar CSV strings voor de input velden
-      hobbies: arrayToCSV(client.hobbies),
-      communication: arrayToCSV(client.communication),
-      strengths: arrayToCSV(client.strengths),
-      tasks_good_at: arrayToCSV(client.tasks_good_at),
-      fixed_tasks: arrayToCSV(client.fixed_tasks),
-      // Signaling plan conversies
-      signaling_plan: client.signaling_plan ? {
-        green: {
-          ...client.signaling_plan.green,
-          goes_well: arrayToCSV(client.signaling_plan.green?.goes_well),
-        },
-        orange: {
-          ...client.signaling_plan.orange,
-          signals: arrayToCSV(client.signaling_plan.orange?.signals),
-          what_helps: arrayToCSV(client.signaling_plan.orange?.what_helps),
-          what_not_helps: arrayToCSV(client.signaling_plan.orange?.what_not_helps),
-        },
-        red: {
-          ...client.signaling_plan.red,
-          safety: arrayToCSV(client.signaling_plan.red?.safety),
-        },
-      } : undefined,
-    };
-    
-    setEditData(initialEditData);
-    setIsEditing(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  // Cancel editing: revert editData and exit
-  function handleCancel() {
-    setEditData(client);
-    setIsEditing(false);
-  }
-
-  // Save edits to Firestore and local state
-  async function handleSave() {
-    try {
-      const refDoc = doc(db, "clients", id!);
-
-      // Build payload for update. Only include keys that are in editData.
-      // We also make sure signaling_plan is properly structured.
-      const payload: any = { ...editData };
-
-      // Normalize lists that were edited as CSV strings
-      // For common list fields, ensure they are arrays in payload
-      if (typeof payload.hobbies === "string")
-        payload.hobbies = csvToArray(payload.hobbies);
-      if (typeof payload.communication === "string")
-        payload.communication = csvToArray(payload.communication);
-      if (typeof payload.strengths === "string")
-        payload.strengths = csvToArray(payload.strengths);
-      if (typeof payload.tasks_good_at === "string")
-        payload.tasks_good_at = csvToArray(payload.tasks_good_at);
-      if (typeof payload.fixed_tasks === "string")
-        payload.fixed_tasks = csvToArray(payload.fixed_tasks);
-
-      // Signaleringsplan fields (they are edited as CSV strings in editData)
-      if (payload.signaling_plan) {
-        const sp = { ...payload.signaling_plan };
-
-        if (typeof sp.green?.goes_well === "string")
-          sp.green.goes_well = csvToArray(sp.green.goes_well);
-        if (typeof sp.orange?.signals === "string")
-          sp.orange.signals = csvToArray(sp.orange.signals);
-        if (typeof sp.orange?.what_helps === "string")
-          sp.orange.what_helps = csvToArray(sp.orange.what_helps);
-        if (typeof sp.orange?.what_not_helps === "string")
-          sp.orange.what_not_helps = csvToArray(sp.orange.what_not_helps);
-        if (typeof sp.red?.safety === "string") sp.red.safety = csvToArray(sp.red.safety);
-
-        payload.signaling_plan = sp;
-      }
-
-      // Firestore update (overwrite provided fields)
-      await updateDoc(refDoc, payload);
-
-      // Update local state to reflect saved data
-      const updatedClient = { ...client, ...payload };
-      setClient(updatedClient);
-      setEditData(updatedClient);
-
-      setIsEditing(false);
-      alert("Gegevens opgeslagen!");
-    } catch (err: any) {
-      console.error("Opslaan mislukt:", err);
-      alert("Opslaan mislukt: " + err?.message);
-    }
-  }
-
-  // Delete client completely
-  async function handleDeleteClient() {
-    const confirmation = window.prompt(
-      `Weet je ZEKER dat je ${client.name} volledig wilt verwijderen?\n\nTyp "VERWIJDER" om te bevestigen:`
-    );
-
-    if (confirmation !== "VERWIJDER") {
-      return;
-    }
-
-    (setIsDeleting(true));
-
-    try {
-      // 1. Verwijder alle documenten uit Storage
-      try {
-        const storageRef = ref(storage, `clients/${id}/documents`);
-        const fileList = await listAll(storageRef);
-        
-        const deletePromises = fileList.items.map((item) => deleteObject(item));
-        await Promise.all(deletePromises);
-      } catch (storageErr) {
-        console.warn("Fout bij verwijderen storage bestanden:", storageErr);
-        // Ga door zelfs als storage verwijdering faalt
-      }
-
-      // 2. Verwijder het Firestore document
-      await deleteDoc(doc(db, "clients", id!));
-
-      alert(`${client.name} is volledig verwijderd.`);
-      
-      // 3. Navigeer terug naar de clientenlijst
-      navigate("/clients"); // Pas dit pad aan naar jouw route
-    } catch (err: any) {
-      console.error("Verwijderen mislukt:", err);
-      alert("Verwijderen mislukt: " + err?.message);
-      setIsDeleting(false);
-    }
-  }
-
-  // Documents: file select + upload
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSelectedFile(file);
-  }
-
-  async function handleUpload() {
-    if (!selectedFile) return alert("Selecteer eerst een bestand.");
-
-    try {
-      const fileRef = ref(storage, `clients/${id}/documents/${selectedFile.name}`);
-      await uploadBytes(fileRef, selectedFile);
-      const url = await getDownloadURL(fileRef);
-
-      // Add to Firestore array
-      await updateDoc(doc(db, "clients", id!), {
-        documents: arrayUnion({
-          name: selectedFile.name,
-          url,
-          createdAt: new Date().toISOString(),
-        }),
-      });
-
-      // Update local state
-      setClient((prev: any) => ({
-        ...prev,
-        documents: [...(prev.documents || []), { name: selectedFile.name, url }],
-      }));
-
-      setSelectedFile(null);
-      alert("Document geüpload!");
-    } catch (err: any) {
-      console.error("Upload fout:", err);
-      alert("Upload fout: " + err?.message);
-    }
-  }
-
-  // Documents: delete
-  async function handleDeleteDocument(docItem: any) {
-    if (!confirm(`Weet je zeker dat je ${docItem.name} wilt verwijderen?`)) return;
-
-    try {
-      const fileRef = ref(storage, `clients/${id}/documents/${docItem.name}`);
-      await deleteObject(fileRef);
-
-      await updateDoc(doc(db, "clients", id!), {
-        documents: arrayRemove(docItem),
-      });
-
-      setClient((prev: any) => ({
-        ...prev,
-        documents: prev.documents.filter((d: any) => d.name !== docItem.name),
-      }));
-
-      alert("Document verwijderd!");
-    } catch (err: any) {
-      console.error("Delete fout:", err);
-      alert("Verwijderen mislukt: " + (err?.message || err));
-    }
-  }
-
-  // Reports: add
-  async function addReport() {
-    if (!newReport.trim()) return alert("Rapport is leeg.");
-
-    const report = {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString().split("T")[0],
-      text: newReport,
-      createdAt: new Date().toISOString(),
-    };
-
-    try {
-      await updateDoc(doc(db, "clients", id!), {
-        reports: arrayUnion(report),
-      });
-
-      setClient((prev: any) => ({
-        ...prev,
-        reports: [...(prev.reports || []), report],
-      }));
-
-      setNewReport("");
-      alert("Rapport opgeslagen!");
-    } catch (err: any) {
-      console.error("Opslaan rapport:", err);
-      alert("Opslaan mislukt: " + err?.message);
-    }
-  }
-
-  // Reports: delete
-  async function deleteReport(reportId: string) {
-    const report = client.reports.find((r: any) => r.id === reportId);
-    if (!report) return;
-    if (!confirm("Weet je zeker dat je dit rapport wilt verwijderen?")) return;
-
-    try {
-      await updateDoc(doc(db, "clients", id!), {
-        reports: arrayRemove(report),
-      });
-
-      setClient((prev: any) => ({
-        ...prev,
-        reports: prev.reports.filter((r: any) => r.id !== reportId),
-      }));
-
-      alert("Rapport verwijderd!");
-    } catch (err: any) {
-      console.error("Delete rapport:", err);
-      alert("Verwijderen mislukt: " + err?.message);
-    }
-  }
-
   if (client === null) return <p>Laden…</p>;
   if (client === undefined) return <p className="notfound">Cliënt niet gevonden.</p>;
 
   return (
     <div className="page-content">
-      {/* Rapport-popup */}
-      {openReport && (
+      {/* Rapport popup */}
+      {reports.openReport && (
         <div
           style={{
             position: "fixed",
@@ -390,7 +82,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
             alignItems: "center",
             zIndex: 9999,
           }}
-          onClick={() => setOpenReport(null)}
+          onClick={() => reports.setOpenReport(null)}
         >
           <div
             style={{
@@ -405,7 +97,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2>Rapport – {openReport.date}</h2>
+            <h2>Rapport – {reports.openReport.date}</h2>
             <div
               style={{
                 whiteSpace: "pre-line",
@@ -415,21 +107,21 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
                 marginBottom: "10px",
               }}
             >
-              {openReport.text}
+              {reports.openReport.text}
             </div>
 
             <div style={{ display: "flex", gap: 8 }}>
               <button
                 style={{ marginTop: "8px", background: "red", color: "white" }}
                 onClick={() => {
-                  deleteReport(openReport.id);
-                  setOpenReport(null);
+                  reports.deleteReport(reports.openReport.id, client);
+                  reports.setOpenReport(null);
                 }}
               >
                 ❌ Rapport verwijderen
               </button>
 
-              <button style={{ marginTop: "8px" }} onClick={() => setOpenReport(null)}>
+              <button style={{ marginTop: "8px" }} onClick={() => reports.setOpenReport(null)}>
                 Sluiten
               </button>
             </div>
@@ -461,35 +153,34 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
             ))}
           </nav>
 
-          {/* Edit actions (common for all tabs) */}
+          {/* Edit actions */}
           <div style={{ display: "flex", justifyContent: "flex-end", margin: "12px 0" }}>
             {!isEditing ? (
-              <button onClick={handleEdit}>Wijzigen ✏️</button>
+              <button onClick={startEdit}>Wijzigen ✏️</button>
             ) : (
               <>
-                <button onClick={handleSave} style={{ marginRight: 8 }}>
+                <button onClick={saveChanges} style={{ marginRight: 8 }}>
                   Opslaan 💾
                 </button>
-                <button onClick={handleCancel}>Annuleren</button>
+                <button onClick={cancelEdit}>Annuleren</button>
               </>
             )}
           </div>
 
-          {/* Verwijder client knop */}
+          {/* Delete button */}
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
             <button
-              onClick={handleDeleteClient}
-              disabled={isDeleting}
+              onClick={() => deleteClient(() => navigate("/clients"))}
               style={{
-                background: isDeleting ? "#888" : "red",
+                background: "red",
                 color: "white",
                 padding: "10px 14px",
                 borderRadius: "6px",
                 border: "none",
-                cursor: isDeleting ? "not-allowed" : "pointer",
+                cursor: "pointer",
               }}
             >
-              {isDeleting ? "Bezig met verwijderen…" : "❌ Cliënt volledig verwijderen"}
+              ❌ Cliënt volledig verwijderen
             </button>
           </div>
 
@@ -500,7 +191,6 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
               <div>
                 <h2>Basisgegevens</h2>
 
-                {/* Address */}
                 <EditableText 
                   label="Adres:" 
                   field="address" 
@@ -510,7 +200,6 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
                   isEditing={isEditing}
                 />
 
-                {/* Contact person */}
                 <EditableText 
                   label="Contactpersoon:" 
                   field="contact_person" 
@@ -520,7 +209,6 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
                   isEditing={isEditing}
                 />
 
-                {/* Medication */}
                 <EditableText 
                   label="Medicatie:" 
                   field="medication" 
@@ -865,17 +553,15 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
               <div>
                 <h2>Documenten</h2>
 
-                {/* File select */}
                 <input
                   type="file"
-                  onChange={handleFileSelect}
+                  onChange={documents.handleFileSelect}
                   accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
                 />
 
-                {/* Upload button */}
-                {selectedFile && (
-                  <button onClick={handleUpload} style={{ marginTop: "10px" }}>
-                    Upload document: {selectedFile.name}
+                {documents.selectedFile && (
+                  <button onClick={documents.uploadDocument} style={{ marginTop: "10px" }}>
+                    Upload document: {documents.selectedFile.name}
                   </button>
                 )}
 
@@ -888,7 +574,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
                           {d.name}
                         </a>
                         <button
-                          onClick={() => handleDeleteDocument(d)}
+                          onClick={() => documents.deleteDocument(d)}
                           style={{ color: "red", cursor: "pointer" }}
                         >
                           ❌ Verwijderen
@@ -917,8 +603,8 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
 
                 <textarea
                   placeholder="Schrijf hier je rapport..."
-                  value={newReport}
-                  onChange={(e) => setNewReport(e.target.value)}
+                  value={reports.newReport}
+                  onChange={(e) => reports.setNewReport(e.target.value)}
                   style={{
                     width: "100%",
                     height: "120px",
@@ -930,7 +616,7 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
                 />
 
                 <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                  <button onClick={addReport}>Rapport opslaan</button>
+                  <button onClick={reports.addReport}>Rapport opslaan</button>
                 </div>
 
                 <h3 style={{ marginTop: "20px" }}>Eerdere rapporten</h3>
@@ -951,20 +637,20 @@ export default function ClientOverviewPage({}: ClientOverviewPageProps) {
                             style={{ cursor: "pointer" }}
                           >
                             <div
-                              onClick={() => setOpenReport(r)}
+                              onClick={() => reports.setOpenReport(r)}
                               className="report-card-date"
                             >
                               {r.date}
                             </div>
                             <div
-                              onClick={() => setOpenReport(r)}
+                              onClick={() => reports.setOpenReport(r)}
                               className="report-card-text"
                             >
                               {r.text.length > 80 ? r.text.slice(0, 80) + "..." : r.text}
                             </div>
 
                             <button
-                              onClick={() => deleteReport(r.id)}
+                              onClick={() => reports.deleteReport(r.id, client)}
                               style={{ color: "red", cursor: "pointer" }}
                             >
                               ❌ Verwijderen
