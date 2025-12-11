@@ -120,6 +120,8 @@ exports.onUserEmailChanged = onDocumentUpdated(
 
         const userEmail = after.email;
         const userName = after.username || 'gebruiker';
+        // Kapitaliseer eerste letter van gebruikersnaam
+        const capitalizedUserName = userName.charAt(0).toUpperCase() + userName.slice(1);
 
         // Maak transporter HIER inline
         const transporter = nodemailer.createTransport({
@@ -215,12 +217,12 @@ exports.onUserEmailChanged = onDocumentUpdated(
             <body>
               <div class="container">
                 <div class="header">
-                  <h1>🎉 Welkom bij Zorgplan</h1>
+                  <h1>Welkom bij Dagbesteding de Speciaalzaak</h1>
                 </div>
                 <div class="content">
-                  <p>Beste <strong>${userName}</strong>,</p>
+                  <p>Beste <strong>${capitalizedUserName}</strong>,</p>
                   
-                  <p>Er is een account voor je aangemaakt in de Zorgplan app. Hieronder vind je jouw persoonlijke inloggegevens:</p>
+                  <p>Er is een account voor je aangemaakt in de Dagbesteding app. Hieronder vind je jouw persoonlijke inloggegevens:</p>
                   
                   <div class="credentials">
                     <div class="credential-item">
@@ -229,7 +231,7 @@ exports.onUserEmailChanged = onDocumentUpdated(
                     </div>
                     <div class="credential-item">
                       <div class="credential-label">🔒 Wachtwoord:</div>
-                      <div class="credential-value">${after.temp_password || '[Neem contact op met beheerder voor je wachtwoord]'}</div>
+                      <div class="credential-value">${after.password || '[Neem contact op met beheerder voor je wachtwoord]'}</div>
                     </div>
                   </div>
                   
@@ -239,7 +241,7 @@ exports.onUserEmailChanged = onDocumentUpdated(
                   
                   <p style="text-align: center;">
                     <a href="https://dagbesteding.speciaalzaakvoorburg.nl" class="button">
-                      🚀 Inloggen op Zorgplan
+                      🚀 Inloggen op Dagbesteding De Speciaalzaak
                     </a>
                   </p>
                   
@@ -254,7 +256,7 @@ exports.onUserEmailChanged = onDocumentUpdated(
                   <p>Heb je vragen of lukt het inloggen niet? Neem dan contact op met het zorgteam.</p>
                   
                   <div class="footer">
-                    <p>Met vriendelijke groet,<br><strong>Het Zorgplan Team</strong></p>
+                    <p>Met vriendelijke groet,<br><strong>Dagbesteding De Speciaalzaak</strong></p>
                     <p style="font-size: 12px; color: #999;">
                       Deze e-mail is automatisch gegenereerd. Reageer niet op dit bericht.
                     </p>

@@ -167,22 +167,6 @@ export default function ClientOverviewPage() {
             )}
           </div>
 
-          {/* Delete button */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
-            <button
-              onClick={() => deleteClient(() => navigate("/clients"))}
-              style={{
-                background: "red",
-                color: "white",
-                padding: "10px 14px",
-                borderRadius: "6px",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              ❌ Cliënt volledig verwijderen
-            </button>
-          </div>
 
           {/* Tab content */}
           <section className="tabContent">
