@@ -14,10 +14,8 @@ export default function Instellingen({ user }: { user?: any }) {
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Debug: log de user prop
   console.log("👤 User in Instellingen:", user);
 
-  // Als er geen user is, toon een boodschap
   if (!user) {
     return (
       <div className="instellingen-page">
@@ -29,50 +27,33 @@ export default function Instellingen({ user }: { user?: any }) {
     );
   }
 
-  // Password policy validatie (SAP-stijl)
   function validatePassword(password: string): { valid: boolean; message: string } {
-    // Minimaal 8 karakters
     if (password.length < 8) {
       return { valid: false, message: "Wachtwoord moet minimaal 8 karakters bevatten" };
     }
-
-    // Maximaal 40 karakters
     if (password.length > 40) {
       return { valid: false, message: "Wachtwoord mag maximaal 40 karakters bevatten" };
     }
-
-    // Moet minimaal 1 hoofdletter bevatten
     if (!/[A-Z]/.test(password)) {
       return { valid: false, message: "Wachtwoord moet minimaal 1 hoofdletter bevatten" };
     }
-
-    // Moet minimaal 1 kleine letter bevatten
     if (!/[a-z]/.test(password)) {
       return { valid: false, message: "Wachtwoord moet minimaal 1 kleine letter bevatten" };
     }
-
-    // Moet minimaal 1 cijfer bevatten
     if (!/[0-9]/.test(password)) {
       return { valid: false, message: "Wachtwoord moet minimaal 1 cijfer bevatten" };
     }
-
-    // Moet minimaal 1 speciaal teken bevatten
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
       return { valid: false, message: "Wachtwoord moet minimaal 1 speciaal teken bevatten (!@#$%^&* etc.)" };
     }
-
-    // Mag geen 3 opeenvolgende identieke karakters bevatten
     for (let i = 0; i < password.length - 2; i++) {
       if (password[i] === password[i + 1] && password[i] === password[i + 2]) {
         return { valid: false, message: "Wachtwoord mag geen 3 opeenvolgende identieke karakters bevatten" };
       }
     }
-
-    // Mag geen gebruikersnaam bevatten (case-insensitive)
     if (password.toLowerCase().includes(user.username.toLowerCase())) {
       return { valid: false, message: "Wachtwoord mag je gebruikersnaam niet bevatten" };
     }
-
     return { valid: true, message: "" };
   }
 
@@ -81,23 +62,19 @@ export default function Instellingen({ user }: { user?: any }) {
     setError("");
     setSuccess("");
 
-    // Basis validatie
     if (!huidigWachtwoord || !nieuwWachtwoord || !bevestigWachtwoord) {
       setError("Vul alle velden in");
       return;
     }
-
     if (nieuwWachtwoord !== bevestigWachtwoord) {
       setError("Nieuwe wachtwoorden komen niet overeen");
       return;
     }
-
     if (nieuwWachtwoord === huidigWachtwoord) {
       setError("Nieuw wachtwoord moet verschillen van het huidige wachtwoord");
       return;
     }
 
-    // Password policy validatie
     const validation = validatePassword(nieuwWachtwoord);
     if (!validation.valid) {
       setError(validation.message);
@@ -107,7 +84,6 @@ export default function Instellingen({ user }: { user?: any }) {
     setIsLoading(true);
 
     try {
-      // 1️⃣ Zoek gebruiker in Firestore
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("username", "==", user.username));
       const snap = await getDocs(q);
@@ -121,7 +97,6 @@ export default function Instellingen({ user }: { user?: any }) {
       const userDoc = snap.docs[0];
       const userData = userDoc.data();
 
-      // 2️⃣ Verificeer huidig wachtwoord
       const huidigHash = sha256(huidigWachtwoord).toString();
       if (huidigHash !== userData.passwordHash) {
         setError("Huidig wachtwoord is onjuist");
@@ -129,7 +104,6 @@ export default function Instellingen({ user }: { user?: any }) {
         return;
       }
 
-      // 3️⃣ Update Firebase Authentication
       const firebaseUser = auth.currentUser;
       if (!firebaseUser) {
         setError("Geen actieve sessie gevonden");
@@ -137,10 +111,9 @@ export default function Instellingen({ user }: { user?: any }) {
         return;
       }
 
-      // Herverifieer gebruiker voordat wachtwoord wordt gewijzigd
       const firebaseEmail = `${user.username}@zorgapp.local`;
       const credential = EmailAuthProvider.credential(firebaseEmail, huidigWachtwoord);
-      
+
       try {
         await reauthenticateWithCredential(firebaseUser, credential);
         await updatePassword(firebaseUser, nieuwWachtwoord);
@@ -151,14 +124,12 @@ export default function Instellingen({ user }: { user?: any }) {
         return;
       }
 
-      // 4️⃣ Update Firestore hash
       const nieuwHash = sha256(nieuwWachtwoord).toString();
       await updateDoc(userDoc.ref, {
         passwordHash: nieuwHash,
         updatedAt: new Date().toISOString()
       });
 
-      // 5️⃣ Succes!
       setSuccess("Wachtwoord succesvol gewijzigd");
       setHuidigWachtwoord("");
       setNieuwWachtwoord("");
@@ -175,7 +146,6 @@ export default function Instellingen({ user }: { user?: any }) {
   const handleTileClick = (section: string) => {
     if (activeSection === section) {
       setActiveSection(null);
-      // Reset form bij sluiten
       setHuidigWachtwoord("");
       setNieuwWachtwoord("");
       setBevestigWachtwoord("");
@@ -183,7 +153,6 @@ export default function Instellingen({ user }: { user?: any }) {
       setSuccess("");
     } else {
       setActiveSection(section);
-      // Reset bij wisselen
       setError("");
       setSuccess("");
     }
@@ -193,41 +162,43 @@ export default function Instellingen({ user }: { user?: any }) {
     <div className="instellingen-page">
       <h1>Instellingen</h1>
 
-      {/* Tegeltjes overzicht */}
+      {/* Tegels */}
       {!activeSection && (
         <div className="tiles-container">
-          <div 
-            className="settings-tile"
-            onClick={() => handleTileClick('wachtwoord')}
+
+          <button 
+            className="settings-tile settings-button"
+            onClick={() => handleTileClick("wachtwoord")}
           >
             <div className="tile-icon">🔒</div>
             <h2>Wachtwoord wijzigen</h2>
             <p>Verander je wachtwoord</p>
-          </div>
+          </button>
 
-          <div 
-            className="settings-tile"
-            onClick={() => handleTileClick('account')}
+          <button 
+            className="settings-tile settings-button"
+            onClick={() => handleTileClick("account")}
           >
             <div className="tile-icon">👤</div>
             <h2>Accountinformatie</h2>
             <p>Bekijk je gegevens</p>
-          </div>
+          </button>
+
         </div>
       )}
 
-      {/* Wachtwoord wijzigen sectie */}
-      {activeSection === 'wachtwoord' && (
+      {/* Wachtwoord wijzigen */}
+      {activeSection === "wachtwoord" && (
         <div className="instellingen-card">
           <button 
             className="back-button"
-            onClick={() => handleTileClick('wachtwoord')}
+            onClick={() => handleTileClick("wachtwoord")}
           >
             ← Terug
           </button>
-          
+
           <h2>Wachtwoord wijzigen</h2>
-          
+
           <form onSubmit={handleWachtwoordWijzigen} className="wachtwoord-form">
             <div className="form-group">
               <label>Huidig wachtwoord</label>
@@ -269,26 +240,29 @@ export default function Instellingen({ user }: { user?: any }) {
         </div>
       )}
 
-      {/* Accountinformatie sectie */}
-      {activeSection === 'account' && (
+      {/* Accountinformatie */}
+      {activeSection === "account" && (
         <div className="instellingen-card">
           <button 
             className="back-button"
-            onClick={() => handleTileClick('account')}
+            onClick={() => handleTileClick("account")}
           >
             ← Terug
           </button>
-          
+
           <h2>Accountinformatie</h2>
+
           <div className="account-info">
             <div className="info-row">
               <strong>Gebruikersnaam:</strong>
               <span>{user.username}</span>
             </div>
+
             <div className="info-row">
               <strong>Rol:</strong>
               <span>{user.role}</span>
             </div>
+
             {user.clientId && (
               <div className="info-row">
                 <strong>Client ID:</strong>
